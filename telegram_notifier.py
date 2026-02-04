@@ -1,45 +1,50 @@
 import requests
 import os
+from translator import translate_text
 
 TELEGRAM_API_URL = "https://api.telegram.org/bot{}/sendMessage"
 
-def format_message(world_news, malaysia_news, world_stocks, malaysia_stocks):
+def format_bilingual_message(world_news, malaysia_news, world_stocks, malaysia_stocks):
     """
-    Formats the data into a readable message for Telegram.
+    Formats the data into a bilingual (English + Chinese) message for Telegram.
     """
-    message = "🌍 *DAILY INSIGHT REPORT* 🇲🇾\n\n"
+    message = "🌍 *DAILY INSIGHT / 每日财经* 🇲🇾\n\n"
     
     # World News
-    message += "📰 *TOP 5 WORLD NEWS*\n"
+    message += "📰 *WORLD NEWS / 国际新闻*\n"
     for i, news in enumerate(world_news, 1):
-        # Escape markdown characters if necessary, keep it simple for now
-        title = news['title'].replace('*', '').replace('_', '')
-        source = news['source']
+        title_en = news['title'].replace('*', '').replace('_', '')
+        title_cn = translate_text(title_en, "zh-CN")
         link = news['link']
-        message += f"{i}. [{title}]({link}) - _{source}_\n"
+        
+        message += f"{i}. [{title_en}]({link})\n"
+        message += f"   🇨🇳 {title_cn}\n"
     message += "\n"
     
     # Malaysia News
-    message += "📰 *TOP 5 MALAYSIA NEWS*\n"
+    message += "📰 *MALAYSIA NEWS / 马来西亚新闻*\n"
     for i, news in enumerate(malaysia_news, 1):
-        title = news['title'].replace('*', '').replace('_', '')
-        source = news['source']
+        title_en = news['title'].replace('*', '').replace('_', '')
+        title_cn = translate_text(title_en, "zh-CN")
         link = news['link']
-        message += f"{i}. [{title}]({link}) - _{source}_\n"
+        
+        message += f"{i}. [{title_en}]({link})\n"
+        message += f"   🇨🇳 {title_cn}\n"
     message += "\n"
     
     # World Stocks
-    message += "📈 *TOP 5 WORLD STOCKS (Movers)*\n"
+    message += "📈 *WORLD STOCKS / 国际股票*\n"
     for i, stock in enumerate(world_stocks, 1):
         symbol = stock['ticker']
         price = stock['price']
         change_pct = stock['pct_change']
         emoji = "🟢" if change_pct >= 0 else "🔴"
+        # Stocks don't really need translation, just universal format
         message += f"{i}. {symbol}: {price:.2f} ({emoji} {change_pct:+.2f}%)\n"
     message += "\n"
 
     # Malaysia Stocks
-    message += "📈 *TOP 5 MALAYSIA STOCKS (Movers)*\n"
+    message += "📈 *MALAYSIA STOCKS / 马来西亚股票*\n"
     for i, stock in enumerate(malaysia_stocks, 1):
         symbol = stock['ticker']
         price = stock['price']
@@ -61,7 +66,8 @@ def send_telegram_message(bot_token, chat_id, message):
     payload = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "Markdown"
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": True 
     }
     
     try:
@@ -75,14 +81,9 @@ def send_telegram_message(bot_token, chat_id, message):
 
 if __name__ == "__main__":
     # Test with dummy data
-    dummy_news = [{"title": "Test News", "link": "http://example.com", "source": "BBC"}] * 5
-    dummy_stocks = [{"ticker": "AAPL", "price": 150.00, "pct_change": 1.5}] * 5
+    dummy_news = [{"title": "Market hits record high", "link": "http://example.com", "source": "BBC"}] 
+    dummy_stocks = [{"ticker": "AAPL", "price": 150.00, "pct_change": 1.5}]
     
-    msg = format_message(dummy_news, dummy_news, dummy_stocks, dummy_stocks)
+    msg = format_bilingual_message(dummy_news, dummy_news, dummy_stocks, dummy_stocks)
     print("--- GENERATED MESSAGE PREVIEW ---")
     print(msg)
-    
-    # Uncomment to test real sending (requires env vars)
-    # token = os.getenv("TELEGRAM_BOT_TOKEN")
-    # chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    # send_telegram_message(token, chat_id, msg)

@@ -4,3 +4,4 @@ feedparser
 schedule
 requests
 pytz
+deep-translator
