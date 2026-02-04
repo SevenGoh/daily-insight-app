@@ -1,0 +1,6 @@
+streamlit
+yfinance
+feedparser
+schedule
+requests
+pytz
